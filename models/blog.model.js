@@ -5,24 +5,29 @@ const blogModel = new mongoose.Schema(
 	{
 		id: {
 			type: String,
-			default: uuidv4(),
+			default: uuidv4,
 			required: true,
 		},
 		title: {
 			type: String,
+			default: "draft",
 			required: true,
 		},
 		description: {
 			type: String,
+			default: "draft",
 			required: true,
 		},
 		cover_picture_url: {
 			type: String,
-			required: true,
 		},
-		deleted_at: String,
+		deleted_at: {
+			type: String,
+			default: null,
+		},
 		is_draft: {
 			type: Boolean,
+			default: false,
 		},
 		user_id: {
 			type: mongoose.Schema.Types.ObjectId,
