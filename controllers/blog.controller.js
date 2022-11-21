@@ -37,7 +37,9 @@ exports.createDraft = async (req, res, next) => {
         return res.status(422).json({ errors: errors.errors });
     }
 
-    const { title, description } = req.body;
+    let title = req.body.title || "draft";
+    let description = req.body.description || "draft";
+
     try {
         const blog = await Blog.create({
             title,

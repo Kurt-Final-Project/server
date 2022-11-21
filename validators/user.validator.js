@@ -27,7 +27,6 @@ exports.userField = [
         .isEmail()
         .isAlphanumeric("en-US", { ignore: "@." })
         .withMessage("Email should only contain letters and a subaddress.")
-
         .custom((value, { req }) => {
             if (value.split("@")[1] === "stratpoint.com") return true;
             return false;

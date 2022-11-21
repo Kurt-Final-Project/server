@@ -52,7 +52,6 @@ exports.postSignupUser = async (req, res, next) => {
             throw error;
         }
         const filePath = req.file.path.replaceAll(/\\+/g, "/");
-        console.log(filePath);
 
         await User.create({
             username,
@@ -102,9 +101,13 @@ exports.updateUserDetails = async (req, res, next) => {
             throw error;
         }
 
-        let sameUser = user.username === username || user.email === email;
-        const existing = await User.findOne({ $or: [{ email }, { username }] });
-        if (existing && !sameUser) {
+        const isExisting = await User.findOne({
+            $or: [{ email }, { username }],
+            _id: {
+                $ne: req.mongoose_id,
+            },
+        });
+        if (isExisting) {
             const error = new Error(
                 "User with that email/username already exist."
             );
@@ -176,7 +179,7 @@ exports.changeUserPassword = async (req, res, next) => {
             throw error;
         }
 
-        if (user.password !== oldPassword) {
+        if (user.password !== md5(oldPassword)) {
             const error = new Error(
                 "Password does not match with the previous one."
             );
@@ -184,7 +187,7 @@ exports.changeUserPassword = async (req, res, next) => {
             throw error;
         }
 
-        if (user.password === password) {
+        if (user.password === md5(password)) {
             const error = new Error(
                 "Password must not be the same as the previous one."
             );
@@ -204,7 +207,7 @@ exports.changeUserPassword = async (req, res, next) => {
             { _id: req.mongoose_id },
             {
                 $set: {
-                    password,
+                    password: md5(password),
                     password_chances: user.password_chances + 1,
                 },
             }

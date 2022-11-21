@@ -10,12 +10,10 @@ const blogModel = new mongoose.Schema(
         },
         title: {
             type: String,
-            default: "",
             required: true,
         },
         description: {
             type: String,
-            default: "",
             required: true,
         },
         cover_picture_url: {
