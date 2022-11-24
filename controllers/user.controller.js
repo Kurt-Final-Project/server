@@ -6,10 +6,16 @@ const { validationResult } = require("express-validator");
 exports.postLoginUser = async (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        return res.status(422).json({ errors: errors.errors });
+        return res.status(422).json({
+            message: errors.errors[0].msg,
+            errors: errors?.errors.map((error) => {
+                return error.param;
+            }),
+        });
     }
 
     const { email, password } = req.body;
+
     try {
         const user = await User.findOne({ email });
         if (user?.password !== md5(password)) {
@@ -17,6 +23,7 @@ exports.postLoginUser = async (req, res, next) => {
             error.statusCode = 404;
             throw error;
         }
+
         const token = jwtSign({
             mongoose_id: user._id,
             user_id: user.id,
@@ -32,10 +39,16 @@ exports.postLoginUser = async (req, res, next) => {
 exports.postSignupUser = async (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        return res.status(422).json({ errors: errors.errors });
+        return res.status(422).json({
+            message: errors.errors[0].msg,
+            errors: errors?.errors.map((error) => {
+                return error.param;
+            }),
+        });
     }
 
     const { username, password, first_name, last_name, email } = req.body;
+
     try {
         const existing = await User.findOne({ $or: [{ email }, { username }] });
         if (existing) {
@@ -89,10 +102,16 @@ exports.getUser = async (req, res, next) => {
 exports.updateUserDetails = async (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        return res.status(422).json({ errors: errors.errors });
+        return res.status(422).json({
+            message: errors.errors[0].msg,
+            errors: errors?.errors.map((error) => {
+                return error.param;
+            }),
+        });
     }
 
     let { username, email, first_name, last_name } = req.body;
+
     try {
         const user = await User.findOne({ _id: req.mongoose_id });
         if (!user) {
@@ -107,6 +126,7 @@ exports.updateUserDetails = async (req, res, next) => {
                 $ne: req.mongoose_id,
             },
         });
+
         if (isExisting) {
             const error = new Error(
                 "User with that email/username already exist."
@@ -114,11 +134,6 @@ exports.updateUserDetails = async (req, res, next) => {
             error.statusCode = 403;
             throw error;
         }
-
-        username = username || user.username;
-        first_name = first_name || user.first_name;
-        last_name = last_name || user.last_name;
-        email = email || user.email;
 
         await User.updateOne(
             { _id: req.mongoose_id },
@@ -148,7 +163,9 @@ exports.updateUserPicture = async (req, res, next) => {
             error.statusCode = 422;
             throw error;
         }
+
         const filePath = req.file.path.replaceAll(/\\+/g, "/");
+
         await User.updateOne(
             { _id: req.mongoose_id },
             {
@@ -167,10 +184,16 @@ exports.updateUserPicture = async (req, res, next) => {
 exports.changeUserPassword = async (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        return res.status(422).json({ errors: errors.errors });
+        return res.status(422).json({
+            message: errors.errors[0].msg,
+            errors: errors?.errors.map((error) => {
+                return error.param;
+            }),
+        });
     }
 
     const { password, oldPassword } = req.body;
+
     try {
         const user = await User.findOne({ _id: req.mongoose_id });
         if (!user) {

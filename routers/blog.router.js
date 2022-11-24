@@ -16,8 +16,8 @@ router
     );
 
 router
-    .route("/draft")
-    .get(isAuthenticated, blogController.getDeletedAndDrafts)
+    .route("/all")
+    .get(isAuthenticated, blogController.getUserPosts)
     .post(
         isAuthenticated,
         blogValidator.createDraft,
@@ -33,10 +33,6 @@ router
         blogValidator.createOrUpdateBlog,
         blogController.updateBlog
     )
-    .delete(
-        isAuthenticated,
-        multer.single("picture"),
-        blogController.deleteBlog
-    );
+    .delete(isAuthenticated, blogController.deleteBlog);
 
 module.exports = router;

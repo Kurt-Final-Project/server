@@ -6,7 +6,7 @@ exports.emailPassword = [
         .normalizeEmail()
         .isEmail()
         .withMessage("Email should only contain letters and subaddress.")
-        .isAlphanumeric("en-US", { ignore: "@." })
+        .isAlphanumeric("en-US", { ignore: "@._" })
         .custom((value, { req }) => {
             if (value.split("@")[1] === "stratpoint.com") return true;
             return false;
@@ -21,12 +21,11 @@ exports.emailPassword = [
 ];
 
 exports.userField = [
-    body("email")
+    body("email", "Email should only contain letters and a subaddress.")
         .trim()
         .normalizeEmail()
         .isEmail()
-        .isAlphanumeric("en-US", { ignore: "@." })
-        .withMessage("Email should only contain letters and a subaddress.")
+        .isAlphanumeric("en-US", { ignore: "@._" })
         .custom((value, { req }) => {
             if (value.split("@")[1] === "stratpoint.com") return true;
             return false;
@@ -44,6 +43,13 @@ exports.userField = [
         .trim()
         .isLength({ min: 8 }),
 
+    body("confirmPassword", "Password does not match.")
+        .trim()
+        .custom((value, { req }) => {
+            if (value !== req.body.password) return false;
+            return true;
+        }),
+
     body(["first_name", "last_name"])
         .trim()
         .isLength({ min: 3 })
@@ -52,7 +58,8 @@ exports.userField = [
 
     body("username", "Username must only contain alphanumeric characters.")
         .trim()
-        .isAlphanumeric(),
+        .isAlphanumeric()
+        .isLength({ min: 3 }),
 ];
 
 exports.updateUserFields = [
@@ -62,7 +69,7 @@ exports.updateUserFields = [
         .normalizeEmail()
         .isEmail()
         .withMessage("Email should only contain letters and subaddress.")
-        .isAlphanumeric("en-US", { ignore: "@." })
+        .isAlphanumeric("en-US", { ignore: "@._" })
         .custom((value, { req }) => {
             if (value.split("@")[1] === "stratpoint.com") return true;
             return false;

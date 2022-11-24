@@ -3,13 +3,19 @@ const fs = require("fs");
 const path = require("path");
 const { validationResult } = require("express-validator");
 
-exports.createBlog = async (req, res, next) => {
+exports.createBlog = async function (req, res, next) {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        return res.status(422).json({ errors: errors.errors });
+        return res.status(422).json({
+            message: errors.errors[0].msg,
+            errors: errors?.errors.map((error) => {
+                return error.param;
+            }),
+        });
     }
 
     const { title, description } = req.body;
+
     try {
         if (!req.file) {
             const error = new Error("Picture is required.");
@@ -34,16 +40,22 @@ exports.createBlog = async (req, res, next) => {
 exports.createDraft = async (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        return res.status(422).json({ errors: errors.errors });
+        return res.status(422).json({
+            message: errors.errors[0].msg,
+            errors: errors?.errors.map((error) => {
+                return error.param;
+            }),
+        });
     }
 
-    let title = req.body.title || "draft";
-    let description = req.body.description || "draft";
+    const title = req.body.title || "draft";
+    const description = req.body.description || "draft";
 
     try {
         const blog = await Blog.create({
             title,
             description,
+            cover_picture_url: "public/covers/null.png",
             user_id: req.mongoose_id,
             is_draft: true,
         });
@@ -59,9 +71,12 @@ exports.getBlogDetails = async (req, res, next) => {
     try {
         const blog = await Blog.findOne({
             id: blog_id,
-            is_draft: false,
             deleted_at: null,
+        }).populate({
+            path: "user_id",
+            select: "-password",
         });
+
         if (!blog) {
             const error = new Error("Blog cannot be found.");
             error.statusCode = 404;
@@ -77,29 +92,34 @@ exports.getBlogDetails = async (req, res, next) => {
 exports.getBlogs = async (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        return res.status(422).json({ errors: errors.errors });
+        return res.status(422).json({
+            message: errors.errors[0].msg,
+            errors: errors?.errors.map((error) => {
+                return error.param;
+            }),
+        });
     }
 
     const page = req.query.page || 1;
     const perPage = req.query.perPage || 10;
     const { title } = req.query;
+
     try {
-        let blogs;
-        if (!title) {
-            blogs = await Blog.find({
-                is_draft: false,
-                deleted_at: null,
+        let blogs = await Blog.find({
+            is_draft: false,
+            deleted_at: null,
+        })
+            .populate({
+                path: "user_id",
+                select: "-password",
             })
-                .limit(perPage)
-                .skip((page - 1) * perPage);
-        } else {
-            blogs = await Blog.find({
-                title: { $regex: title, $options: "i" },
-                is_draft: false,
-                deleted_at: null,
-            })
-                .limit(perPage)
-                .skip((page - 1) * perPage);
+            .sort({ createdAt: -1 })
+            .limit(perPage)
+            .skip((page - 1) * perPage);
+
+        const regex = new RegExp(title, "ig");
+        if (title) {
+            blogs = blogs.filter((blog) => blog.title.match(regex));
         }
 
         return res.status(200).json({ message: "Blogs retrieved.", blogs });
@@ -110,6 +130,7 @@ exports.getBlogs = async (req, res, next) => {
 
 exports.deleteBlog = async (req, res, next) => {
     const { blog_id } = req.params;
+
     try {
         const blog = await Blog.findOne({ id: blog_id });
         if (!blog) {
@@ -142,11 +163,17 @@ exports.deleteBlog = async (req, res, next) => {
 exports.updateBlog = async (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        return res.status(422).json({ errors: errors.errors });
+        return res.status(422).json({
+            message: errors.errors[0].msg,
+            errors: errors?.errors.map((error) => {
+                return error.param;
+            }),
+        });
     }
 
-    const { title, description } = req.body;
+    const { title, description, action } = req.body;
     const { blog_id } = req.params;
+
     try {
         const blog = await Blog.findOne({ id: blog_id });
         if (!blog) {
@@ -162,25 +189,31 @@ exports.updateBlog = async (req, res, next) => {
         }
 
         let filePath = blog.cover_picture_url;
-        if (req.file) {
+
+        if (req.file && !blog.is_draft) {
             fs.unlink(path.join(require.main.path, filePath), (err) => {
                 if (err && err.code === "ENOENT")
                     console.log("No image to unlink. Proceeding");
                 else if (err) console.log("An error occured");
                 else console.log("Image updated.");
             });
-
-            filePath = req.file.path.replaceAll(/\\+/g, "/");
         }
+
+        filePath = req.file.path.replaceAll(/\\+/g, "/");
+        let query = {
+            title,
+            description,
+            cover_picture_url: filePath,
+            is_draft: false,
+        };
+
+        if (action === "delete") query.deleted_at = Date.now();
+        else if (action === "draft") query.is_draft = true;
 
         await Blog.updateOne(
             { id: blog.id },
             {
-                $set: {
-                    title,
-                    description,
-                    cover_picture_url: filePath,
-                },
+                $set: query,
             }
         );
 
@@ -190,10 +223,17 @@ exports.updateBlog = async (req, res, next) => {
     }
 };
 
-exports.getDeletedAndDrafts = async (req, res, next) => {
+exports.getUserPosts = async (req, res, next) => {
     try {
-        const blogs = await Blog.find({
-            $or: [{ deleted_at: { $ne: null } }, { is_draft: true }],
+        const blogs = await Blog.find({ user_id: req.mongoose_id })
+            .populate({
+                path: "user_id",
+                select: "-password",
+            })
+            .sort({ createdAt: -1 });
+
+        const postedBlogs = blogs.filter((blog) => {
+            return blog.deleted_at === null && blog.is_draft === false;
         });
 
         const deletedBlogs = blogs.filter((blog) => {
@@ -201,11 +241,12 @@ exports.getDeletedAndDrafts = async (req, res, next) => {
         });
 
         const draftedBlogs = blogs.filter((blog) => {
-            return blog.is_draft === true;
+            return blog.is_draft === true && blog.deleted_at === null;
         });
 
         return res.status(200).json({
             message: "Deleted and drafts retrieved.",
+            postedBlogs,
             deletedBlogs,
             draftedBlogs,
         });
