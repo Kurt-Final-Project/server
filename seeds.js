@@ -28,7 +28,11 @@ const produceFakeBlogs = async () => {
                 .toLocaleLowerCase(),
             first_name,
             last_name,
-            email: "test@stratpoint.com",
+            email: faker.internet.email(
+                first_name.toLowerCase(),
+                last_name.toLowerCase(),
+                "stratpoint.com"
+            ),
             password: md5("123123123"),
             profile_picture_url: path
                 .join("public", "covers", img)
