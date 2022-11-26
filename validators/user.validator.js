@@ -59,7 +59,8 @@ exports.userField = [
     body("username", "Username must only contain alphanumeric characters.")
         .trim()
         .isAlphanumeric()
-        .isLength({ min: 3 }),
+        .isLength({ min: 3 })
+        .withMessage("Name fields must only contain letters."),
 ];
 
 exports.updateUserFields = [
@@ -88,8 +89,8 @@ exports.updateUserFields = [
         .trim()
         .isLength({ min: 3 })
         .withMessage("Name fields must be at least 3 characters long.")
-        .isAlpha("en-US", { ignore: " '" }),
-
+        .isAlpha("en-US", { ignore: " '" })
+        .withMessage("Name fields must only contain letters."),
     body("username", "Username must only contain alphanumeric characters.")
         .optional()
         .trim()

@@ -1,6 +1,4 @@
 const { Blog } = require("../models");
-const fs = require("fs");
-const path = require("path");
 const { validationResult } = require("express-validator");
 
 exports.createBlog = async function (req, res, next) {
@@ -22,8 +20,8 @@ exports.createBlog = async function (req, res, next) {
             error.statusCode = 422;
             throw error;
         }
-        const filePath = req.file.path.replaceAll(/\\+/g, "/");
 
+        const filePath = req.file.path.replaceAll(/\\/g, "/");
         const blog = await Blog.create({
             title,
             description,
@@ -100,29 +98,46 @@ exports.getBlogs = async (req, res, next) => {
         });
     }
 
-    const page = req.query.page || 1;
-    const perPage = req.query.perPage || 10;
-    const { title } = req.query;
+    const page = +req.query.page || 1;
+    const perPage = req.query.perPage || 3;
+    const title = req.query.title || undefined;
 
     try {
-        let blogs = await Blog.find({
+        const regex = new RegExp(title, "ig");
+        const query = {
             is_draft: false,
             deleted_at: null,
-        })
+            title: { $regex: regex },
+        };
+
+        const blogs = await Blog.find(query)
             .populate({
                 path: "user_id",
                 select: "-password",
             })
-            .sort({ createdAt: -1 })
+            .sort({ updatedAt: -1 })
             .limit(perPage)
             .skip((page - 1) * perPage);
 
-        const regex = new RegExp(title, "ig");
-        if (title) {
-            blogs = blogs.filter((blog) => blog.title.match(regex));
-        }
+        const totalPosts = await Blog.find(query).countDocuments();
+        const lastPage = Math.ceil(totalPosts / perPage);
+        const startingPage =
+            page > perPage - 1 ? Math.floor(page / perPage) * perPage : 1;
+        const endingPage =
+            startingPage + 2 <= lastPage ? startingPage + 2 : lastPage;
 
-        return res.status(200).json({ message: "Blogs retrieved.", blogs });
+        return res.status(200).json({
+            message: "Blogs retrieved.",
+            blogs,
+            totalPosts,
+            currentPage: page,
+            perPage,
+            hasPreviousPage: page > 1,
+            hasNextPage: page < lastPage,
+            startingPage:
+                page > perPage - 1 ? Math.floor(page / perPage) * perPage : 1,
+            endingPage,
+        });
     } catch (err) {
         next(err);
     }
@@ -171,7 +186,7 @@ exports.updateBlog = async (req, res, next) => {
         });
     }
 
-    const { title, description, action } = req.body;
+    const { title, description } = req.body;
     const { blog_id } = req.params;
 
     try {
@@ -189,31 +204,17 @@ exports.updateBlog = async (req, res, next) => {
         }
 
         let filePath = blog.cover_picture_url;
-
-        if (req.file && !blog.is_draft) {
-            fs.unlink(path.join(require.main.path, filePath), (err) => {
-                if (err && err.code === "ENOENT")
-                    console.log("No image to unlink. Proceeding");
-                else if (err) console.log("An error occured");
-                else console.log("Image updated.");
-            });
-        }
-
-        filePath = req.file.path.replaceAll(/\\+/g, "/");
-        let query = {
-            title,
-            description,
-            cover_picture_url: filePath,
-            is_draft: false,
-        };
-
-        if (action === "delete") query.deleted_at = Date.now();
-        else if (action === "draft") query.is_draft = true;
+        if (req.file) filePath = req.file.path.replaceAll(/\\/g, "/");
 
         await Blog.updateOne(
             { id: blog.id },
             {
-                $set: query,
+                $set: {
+                    title,
+                    description,
+                    cover_picture_url: filePath,
+                    is_draft: false,
+                },
             }
         );
 
@@ -230,7 +231,7 @@ exports.getUserPosts = async (req, res, next) => {
                 path: "user_id",
                 select: "-password",
             })
-            .sort({ createdAt: -1 });
+            .sort({ updatedAt: -1 });
 
         const postedBlogs = blogs.filter((blog) => {
             return blog.deleted_at === null && blog.is_draft === false;
