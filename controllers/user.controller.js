@@ -64,7 +64,7 @@ exports.postSignupUser = async (req, res, next) => {
             error.statusCode = 422;
             throw error;
         }
-        const filePath = req.file.path.replaceAll(/\\+/g, "/");
+        const filePath = req.file.path.split("\\").join("/");
 
         await User.create({
             username,
@@ -164,7 +164,7 @@ exports.updateUserPicture = async (req, res, next) => {
             throw error;
         }
 
-        const filePath = req.file.path.replaceAll(/\\+/g, "/");
+        const filePath = req.file.path.split("\\").join("/");
 
         await User.updateOne(
             { _id: req.mongoose_id },

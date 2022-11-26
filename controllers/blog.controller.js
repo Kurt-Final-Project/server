@@ -21,7 +21,7 @@ exports.createBlog = async function (req, res, next) {
             throw error;
         }
 
-        const filePath = req.file.path.replaceAll(/\\/g, "/");
+        const filePath = req.file.path.split("\\").join("/");
         const blog = await Blog.create({
             title,
             description,
@@ -204,7 +204,7 @@ exports.updateBlog = async (req, res, next) => {
         }
 
         let filePath = blog.cover_picture_url;
-        if (req.file) filePath = req.file.path.replaceAll(/\\/g, "/");
+        if (req.file) filePath = req.file.path.split("\\").join("/");
 
         await Blog.updateOne(
             { id: blog.id },
