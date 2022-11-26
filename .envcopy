@@ -1,0 +1,4 @@
+MONGODB_URI=mongodb://127.0.0.1:27017
+DB_TABLE=/test
+PORT=8000
+JWT_SECRET=zasjdckn12m3nml
