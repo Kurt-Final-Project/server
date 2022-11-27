@@ -2,7 +2,10 @@
 
 # Homepage
 
-Frontend deployed on - https://blogcast.netlify.app/
+Frontend deployed on - https://myblogcast.vercel.app/
+
+-   backup https://blogcast.netlify.app/
+
 Backend deployed on - https://blogcastserver.onrender.com/
 
 -   [x] Able to view Blog list created by admin

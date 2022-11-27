@@ -91,10 +91,14 @@ exports.updateUserFields = [
         .withMessage("Name fields must be at least 3 characters long.")
         .isAlpha("en-US", { ignore: " '" })
         .withMessage("Name fields must only contain letters."),
-    body("username", "Username must only contain alphanumeric characters.")
+
+    body(
+        "username",
+        "Username must only contain alphanumeric characters, underscore and dot."
+    )
         .optional()
         .trim()
-        .isAlphanumeric(),
+        .isAlphanumeric("en-US", { ignore: "_." }),
 ];
 
 exports.updateUserPassword = [

@@ -17,28 +17,25 @@ const produceFakeBlogs = async () => {
 
     const maxUsers = 5;
     const blogsPerUser = 3;
+
+    const testUser = await User.create({
+        username: faker.internet
+            .userName(faker.internet.firstName, faker.internet.lastName)
+            .toLocaleLowerCase(),
+        first_name: "kurt",
+        last_name: "testing",
+        email: "test@stratpoint.com",
+        password: md5("123123123"),
+        profile_picture_url: path
+            .join("public", "covers", "0.png")
+            .split("\\")
+            .join("/"),
+    });
+
     for (let i = 0; i < maxUsers; i++) {
         const first_name = faker.name.firstName();
         const last_name = faker.name.lastName();
         const img = Math.floor(Math.random() * 5) + ".png";
-
-        const testUser = await User.create({
-            username: faker.internet
-                .userName(faker.internet.firstName, faker.internet.lastName)
-                .toLocaleLowerCase(),
-            first_name,
-            last_name,
-            email: faker.internet.email(
-                first_name.toLowerCase(),
-                last_name.toLowerCase(),
-                "stratpoint.com"
-            ),
-            password: md5("123123123"),
-            profile_picture_url: path
-                .join("public", "covers", img)
-                .split("\\")
-                .join("/"),
-        });
 
         const user = await User.create({
             username: faker.internet
