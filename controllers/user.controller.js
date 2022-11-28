@@ -37,7 +37,7 @@ exports.postSignupUser = async (req, res, next) => {
             "User with that email/username already exist.",
             403
         );
-        errorChecker.hasFile(file);
+        errorChecker.hasFile(req.file);
 
         const filePath = req.file.path.split("\\").join("/");
 
