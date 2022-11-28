@@ -19,12 +19,7 @@ router
 router
     .route("/all")
     .get(isAuthenticated, blogController.getUserPosts)
-    .post(
-        isAuthenticated,
-        blogValidator.createDraft,
-        validFields,
-        blogController.createDraft
-    );
+    .post(isAuthenticated, blogController.createDraft);
 
 router
     .route("/:blog_id")

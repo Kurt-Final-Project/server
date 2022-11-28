@@ -11,5 +11,3 @@ exports.createOrUpdateBlog = [
         .isLength({ min: 5 })
         .withMessage("Title must be at least 5 characters long."),
 ];
-
-exports.createDraft = [body("title").trim(), body("description").trim()];
