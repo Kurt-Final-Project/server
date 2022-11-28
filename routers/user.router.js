@@ -1,18 +1,24 @@
 const express = require("express");
 const router = express.Router();
 const { userController } = require("../controllers");
-const { isAuthenticated, multer } = require("../middlewares");
+const { isAuthenticated, multer, validFields } = require("../middlewares");
 const userValidator = require("../validators/user.validator");
 
 router
     .route("/login")
-    .post(userValidator.emailPassword, userController.postLoginUser);
+    .post(
+        userValidator.emailPassword,
+        validFields,
+        userController.postLoginUser
+    );
 
 router
     .route("/signup")
     .post(
         multer.single("picture"),
-        userValidator.userField,
+        userValidator.userFields,
+        userValidator.updateUserPassword,
+        validFields,
         userController.postSignupUser
     );
 
@@ -21,7 +27,8 @@ router
     .get(isAuthenticated, userController.getUser)
     .put(
         isAuthenticated,
-        userValidator.updateUserFields,
+        userValidator.userFields,
+        validFields,
         userController.updateUserDetails
     )
     .patch(
@@ -35,6 +42,7 @@ router
     .patch(
         isAuthenticated,
         userValidator.updateUserPassword,
+        validFields,
         userController.changeUserPassword
     );
 

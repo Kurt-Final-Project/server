@@ -13,15 +13,3 @@ exports.createOrUpdateBlog = [
 ];
 
 exports.createDraft = [body("title").trim(), body("description").trim()];
-
-exports.getBlogs = [
-    query("page", "Page query must only contain numerics.")
-        .optional()
-        .trim()
-        .isNumeric(),
-
-    query("perPage", "Page query must only contain numerics.")
-        .optional()
-        .trim()
-        .isNumeric(),
-];
