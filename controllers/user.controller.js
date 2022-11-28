@@ -9,7 +9,12 @@ exports.postLoginUser = async (req, res, next) => {
     try {
         const user = await User.findOne({ email });
 
-        errorChecker.isPasswordCorrect(user?.password, password);
+        errorChecker.isPasswordCorrect(
+            user?.password,
+            password,
+            "No user found.",
+            404
+        );
 
         const token = jwtSign({
             mongoose_id: user._id,
@@ -140,35 +145,16 @@ exports.changeUserPassword = async (req, res, next) => {
 
     try {
         const user = await User.findOne({ _id: req.mongoose_id });
-        if (!user) {
-            const error = new Error("No user found.");
-            error.statusCode = 404;
-            throw error;
-        }
 
-        if (user.password !== md5(oldPassword)) {
-            const error = new Error(
-                "Password does not match with the previous one."
-            );
-            error.statusCode = 403;
-            throw error;
-        }
-
-        if (user.password === md5(password)) {
-            const error = new Error(
-                "Password must not be the same as the previous one."
-            );
-            error.statusCode = 422;
-            throw error;
-        }
-
-        if (user.password_chances >= 3) {
-            const error = new Error(
-                "You have used all your change password chances."
-            );
-            error.statusCode = 403;
-            throw error;
-        }
+        errorChecker.isExisting(user, "No user found.", 404);
+        errorChecker.isPasswordCorrect(
+            user.password,
+            oldPassword,
+            "Password does not match with the previous one.",
+            403
+        );
+        errorChecker.isPasswordSameAsPrevious(user.password, password);
+        errorChecker.hasUsedAllChances(user.password_chances);
 
         await User.updateOne(
             { _id: req.mongoose_id },

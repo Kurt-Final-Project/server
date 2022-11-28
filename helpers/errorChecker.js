@@ -2,7 +2,9 @@ const md5 = require("md5");
 
 exports.hasFile = (file) => {
     if (!file) {
-        const error = new Error("Picture is required.");
+        const error = new Error(
+            "Picture is required and must be in jpg/png format."
+        );
         error.statusCode = 422;
         throw error;
     }
@@ -27,11 +29,32 @@ exports.isAuthorized = (userId, reqId, msg) => {
     return;
 };
 
-exports.isPasswordCorrect = (userPassword, passwordInput) => {
+exports.isPasswordCorrect = (userPassword, passwordInput, msg, code) => {
     if (userPassword !== md5(passwordInput)) {
-        const error = new Error("No user found.");
-        error.statusCode = 404;
+        const error = new Error(msg);
+        error.statusCode = code;
         throw error;
     }
     return;
+};
+
+exports.isPasswordSameAsPrevious = (userPassword, newPassword) => {
+    if (userPassword === md5(newPassword)) {
+        const error = new Error(
+            "Password must not be the same as the previous one."
+        );
+        error.statusCode = 422;
+        throw error;
+    }
+    return;
+};
+
+exports.hasUsedAllChances = (chances) => {
+    if (chances >= 3) {
+        const error = new Error(
+            "You have used all your change password chances."
+        );
+        error.statusCode = 403;
+        throw error;
+    }
 };
