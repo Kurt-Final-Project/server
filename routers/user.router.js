@@ -4,46 +4,27 @@ const { userController } = require("../controllers");
 const { isAuthenticated, multer, validFields } = require("../middlewares");
 const userValidator = require("../validators/user.validator");
 
-router
-    .route("/login")
-    .post(
-        userValidator.emailPassword,
-        validFields,
-        userController.postLoginUser
-    );
+router.route("/login").post(userValidator.emailPassword, validFields, userController.loginUser);
 
 router
-    .route("/signup")
-    .post(
-        multer.single("picture"),
-        userValidator.userFields,
-        userValidator.updateUserPassword,
-        validFields,
-        userController.postSignupUser
-    );
+	.route("/signup")
+	.post(
+		multer.single("picture"),
+		userValidator.userFields,
+		userValidator.updateUserPassword,
+		validFields,
+		userController.signupUser
+	);
 
 router
-    .route("/profile")
-    .get(isAuthenticated, userController.getUser)
-    .put(
-        isAuthenticated,
-        userValidator.userFields,
-        validFields,
-        userController.updateUserDetails
-    )
-    .patch(
-        isAuthenticated,
-        multer.single("picture"),
-        userController.updateUserPicture
-    );
+	.route("/profile")
+	.put(isAuthenticated, userValidator.userFields, userValidator.userAt, validFields, userController.updateUserDetails)
+	.patch(isAuthenticated, multer.single("picture"), userController.updateUserPicture);
+
+router.route("/profile/:user_at").get(isAuthenticated, userController.getUser);
 
 router
-    .route("/profile/password")
-    .patch(
-        isAuthenticated,
-        userValidator.updateUserPassword,
-        validFields,
-        userController.changeUserPassword
-    );
+	.route("/password/change")
+	.patch(isAuthenticated, userValidator.updateUserPassword, validFields, userController.changeUserPassword);
 
 module.exports = router;

@@ -11,7 +11,7 @@ const blogModel = new mongoose.Schema(
 			type: String,
 			required: true,
 		},
-		deletedAt: {
+		deleted_at: {
 			type: Date,
 			default: null,
 		},

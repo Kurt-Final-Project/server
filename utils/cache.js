@@ -1,6 +1,6 @@
 const client = require("../startup/redis");
 
-const expirationTime = Math.floor(Date.now() / 1000) + 60 * 5;
+const expirationTime = Math.floor(Date.now() / 1000) + 60 * 5; // 5mins
 
 module.exports = async (key, value) => {
 	try {

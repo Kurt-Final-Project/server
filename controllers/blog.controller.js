@@ -54,7 +54,11 @@ exports.getBlogs = async (req, res, next) => {
 		const totalCachePromise = client.get("total");
 		const cacheBlogsPromise = client.get(blogKey);
 
-		const [totalDocuments, totalCached, cachedBlogs] = await Promise.all([totalPromise, totalCachePromise, cacheBlogsPromise]);
+		const [totalDocuments, totalCached, cachedBlogs] = await Promise.all([
+			totalPromise,
+			totalCachePromise,
+			cacheBlogsPromise,
+		]);
 
 		if (+totalCached === totalDocuments && cachedBlogs) {
 			return res.status(200).json({
@@ -63,7 +67,7 @@ exports.getBlogs = async (req, res, next) => {
 			});
 		}
 
-		const blogs = await Blog.find({})
+		const blogs = await Blog.find({ deleted_at: null })
 			.populate({ path: "user_id", select: "profile_picture_url first_name last_name" })
 			.sort({ updatedAt: -1 })
 			.limit(perPage)
@@ -85,11 +89,11 @@ exports.deleteBlog = async (req, res, next) => {
 	const { blog_id } = req.params;
 
 	try {
-		const filter = { _id: blog_id, user_id: req.mongoose_id, deletedAt: null };
+		const filter = { _id: blog_id, user_id: req.mongoose_id, deleted_at: null };
 		const blog = await Blog.findOneAndUpdate(filter, {
 			$set: {
 				description: "POST DELETED",
-				deletedAt: new Date(),
+				deleted_at: new Date(),
 			},
 		});
 
